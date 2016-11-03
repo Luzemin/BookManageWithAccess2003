@@ -1,0 +1,6 @@
+c:\users\luzemin\documents\visual studio 2013\Projects\Book\Book\bin\Book.dll.config
+c:\users\luzemin\documents\visual studio 2013\Projects\Book\Book\bin\Book.dll
+c:\users\luzemin\documents\visual studio 2013\Projects\Book\Book\bin\Book.pdb
+c:\users\luzemin\documents\visual studio 2013\Projects\Book\Book\obj\Debug\Book.csprojResolveAssemblyReference.cache
+c:\users\luzemin\documents\visual studio 2013\Projects\Book\Book\obj\Debug\Book.dll
+c:\users\luzemin\documents\visual studio 2013\Projects\Book\Book\obj\Debug\Book.pdb

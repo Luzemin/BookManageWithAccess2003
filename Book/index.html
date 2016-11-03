@@ -1,0 +1,177 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>教材信息管理 - 列表</title>
+    <link href="Content/css/common.css" rel="stylesheet" />
+    <script>
+        window.onload = function () {
+            //空提示
+            function empty() {
+                var emptyText = '<div class="empty">提示：没有数据，赶快去<a href="edit.html">添加</a>吧！</div>';
+                var btnBox = document.getElementsByClassName("btnbox")[0];
+                btnBox.parentNode.removeChild(btnBox);
+                document.getElementById("list").innerHTML = emptyText;
+            }
+
+            var request = new XMLHttpRequest();
+            request.onreadystatechange = function () {
+                if (request.readyState == 4) {
+                    if (request.status == "200") {
+                        var msg = request.responseText;
+                        if (!msg) {
+                            empty();
+                            return;
+                        };
+
+                        var list = JSON.parse(msg);
+                        var html = '<tr>'
+                            + '<th><input type="checkbox" id="cball" /></th>'
+                            + '<th>操作</th>'
+                            + '<th>编号</th>'
+                            + '<th>书名</th>'
+                            + '<th>作者</th>'
+                            + '<th>出版社</th>'
+                            + '<th>单价</th>'
+                            + '<th>数量</th>'
+                            + '<th>录入时间</th>'
+                            + '</tr>';
+                        for (var i = 0; i < list.length; i++) {
+                            var item = list[i];
+                            html += '<tr>'
+                                    + '<td><input type="checkbox" class="cb" data-id="' + item.id + '"/></td>'
+                                    + '<td><a href="edit.html?id=' + item.id + '">编辑</a>　<a href="#" class="del" data-id="' + item.id + '">删除</a></td>'
+                                    + '<td>' + item.code + '</td>'
+                                    + '<td>' + item.name + '</td>'
+                                    + '<td>' + item.author + '</td>'
+                                    + '<td>' + item.press + '</td>'
+                                    + '<td>￥' + parseFloat(item.price).toFixed(2) + '</td>'
+                                    + '<td>' + item.count + '</td>'
+                                    + '<td>' + item.createtime + '</td>'
+                                    + '</tr>';
+                        }
+                        document.getElementById("tab").innerHTML = html;
+
+                        //单条删除
+                        var delBtns = document.getElementsByClassName("del");
+                        for (var i = 0; i < delBtns.length; i++) {
+                            var item = delBtns[i];
+                            item.onclick = function () {
+                                if (confirm('你确定要删除吗？')) {
+                                    del(this);
+                                }
+                                return false;
+                            }
+                        }
+
+                        //全选
+                        document.getElementById("cball").onclick = function () {
+                            var cbs = document.getElementsByClassName("cb");
+                            for (var i = 0; i < cbs.length; i++) {
+                                cbs[i].checked = this.checked;
+                            }
+                        }
+                    }
+                }
+            }
+            request.open("get", "/AJAX.aspx?op=list");
+            request.setRequestHeader("CONTENT-TYPE", "application/x-www-form-urlencoded");
+            request.send();
+
+            //删除操作
+            function del(obj) {
+                var id = obj.attributes["data-id"].nodeValue;
+                var request = new XMLHttpRequest();
+                request.onreadystatechange = function () {
+                    if (request.readyState == 4) {
+                        if (request.status == "200") {
+                            var msg = request.responseText;
+                            if (msg == 1) {
+                                var tab = document.getElementById("tab");
+                                var tr = obj.parentNode.parentNode;
+                                tab.firstChild.removeChild(tr);
+                                //如果删除的是最后一行了，那么整个列表就都删除掉
+                                var leftTrs = tab.getElementsByTagName("tr");
+                                if (leftTrs.length == 1) {
+                                    empty();
+                                }
+                            }
+                            else {
+                                alert("删除失败，请重试");
+                            }
+                        }
+                    }
+                }
+                request.open("post", "/AJAX.aspx?op=del");
+                request.setRequestHeader("CONTENT-TYPE", "application/x-www-form-urlencoded");
+                request.send("ids=" + id);
+            }
+
+            //全部删除
+            document.getElementsByClassName("delall")[0].onclick = function () {
+                var cbs = document.getElementsByClassName("cb");
+                var ids = [], trs = [];
+                for (var i = 0; i < cbs.length; i++) {
+                    var item = cbs[i];
+                    if (item.checked) {
+                        ids.push(item.attributes["data-id"].nodeValue);
+                        trs.push(item.parentNode.parentNode);
+                    }
+                }
+
+                if (ids.length == 0) {
+                    alert("请至少选择一条数据");
+                    return false;
+                }
+
+                if (confirm('你确定要删除吗？')) {
+                    var request = new XMLHttpRequest();
+                    request.onreadystatechange = function () {
+                        if (request.readyState == 4) {
+                            if (request.status == "200") {
+                                var msg = request.responseText;
+                                if (msg > 0) {
+                                    var tbody = document.getElementById("tab").firstChild;
+                                    for (var i = 0; i < trs.length; i++) {
+                                        tbody.removeChild(trs[i]);
+                                    }
+                                    //如果删除的是最后一行了，那么整个列表就都删除掉
+                                    var leftTrs = tab.getElementsByTagName("tr");
+                                    if (leftTrs.length == 1) {
+                                        empty();
+                                    }
+                                }
+                                else {
+                                    alert("删除失败，请重试");
+                                }
+                            }
+                        }
+                    }
+                    request.open("post", "/AJAX.aspx?op=del");
+                    request.setRequestHeader("CONTENT-TYPE", "application/x-www-form-urlencoded");
+                    request.send("ids=" + ids.join(','));
+                }
+                return false;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="wrap">
+        <div class="head">
+            <div class="container">教材信息管理系统</div>
+        </div>
+        <div class="main list">
+            <div class="container">
+                <div class="btnbox">
+                    <a href="edit.html" class="btn">添加</a>
+                    <a href="#" class="btn delall">全部删除</a>
+                </div>
+                <div id="list">
+                    <table id="tab"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

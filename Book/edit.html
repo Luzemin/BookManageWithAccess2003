@@ -1,0 +1,226 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>教材信息管理 - 编辑</title>
+    <link href="Content/css/common.css" rel="stylesheet" />
+    <script>
+        window.onload = function () {
+            //获取参数
+            var id = GetQueryString("id");
+            var postUrl = "/AJAX.aspx?op=edit";
+
+            //如果是编辑页面，那么id有值
+            if (id) {
+                //1.发异步请求，获取id这条数据
+                var request = new XMLHttpRequest();
+                request.onreadystatechange = function () {
+                    if (request.readyState == 4) {
+                        if (request.status == "200") {
+                            var msg = request.responseText;
+                            if (!msg) {
+                                window.location.href = "index.html";
+                            };
+                            //2.给文本框赋值
+                            var data = JSON.parse(msg)[0];
+                            for (var i = 0; i < inputs.length; i++) {
+                                var item = inputs[i];
+                                if (item.name == "price") {
+                                    item.value = parseFloat(data[item.name]).toFixed(2);
+                                }
+                                else {
+                                    item.value = data[item.name];
+                                }
+                            }
+                            //3.保存的时候请求的地址更换
+                            postUrl += "&id=" + id;
+                        }
+                    }
+                }
+                request.open("get", "/AJAX.aspx?op=one&id=" + id);
+                request.setRequestHeader("CONTENT-TYPE", "application/x-www-form-urlencoded");
+                request.send();
+            }
+
+            //数据验证
+            var form = document.getElementById("form");
+            var inputs = form.getElementsByTagName('input');
+            for (var i = 0; i < inputs.length; i++) {
+                var item = inputs[i];
+                item.onfocus = function () {
+                    check(this);
+                }
+            }
+
+            function check(obj) {
+                obj.style.borderColor = "#ccc";
+            }
+
+            function GetQueryString(name) {
+                var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+                var r = window.location.search.substr(1).match(reg);
+                if (r != null) return decodeURIComponent(r[2]);
+                return null;
+            }
+
+            document.getElementById("submbit").onclick = function () {
+                var submbitBtn = this;
+                //html 5
+                if (this.classList.contains("sending")) {
+                    return false;
+                }
+
+                var isvalid = true;
+                for (var i = 0; i < inputs.length; i++) {
+                    var item = inputs[i];
+                    var val = item.value;
+                    if (!val) {
+                        item.style.borderColor = "red";
+                        isvalid = false;
+                    }
+                    else if (item.name == "price") {
+                        var reg = /^[0-9]+(.[0-9]{2})?$/;
+                        if (!reg.test(val)) {
+                            item.style.borderColor = "blue";
+                            isvalid = false;
+                        }
+                    }
+                    else if (item.name == "count") {
+                        var reg = /^\d*$/;
+                        if (!reg.test(val)) {
+                            item.style.borderColor = "blue";
+                            isvalid = false;
+                        }
+                    }
+                }
+                if (isvalid) {
+                    //点击按钮，按钮变为灰色
+                    this.text = "保存中...";
+                    this.style.backgroundColor = "#ccc";
+                    this.classList.add("sending");
+
+                    var request = new XMLHttpRequest();
+                    request.onreadystatechange = function () {
+                        if (request.readyState == 4) {
+                            //存在响应  清空数据
+                            submbitBtn.text = "保存";
+                            submbitBtn.style.backgroundColor = "#ff6a00";
+                            submbitBtn.classList.remove("sending");
+
+                            for (var i = 0; i < inputs.length; i++) {
+                                var item = inputs[i];
+                                item.value = "";
+                            }
+
+                            if (request.status == "200") {
+                                var data = request.responseText;
+                                var tip = document.getElementById("tip");
+                                if (data == 1) {
+                                    tip.style.color = "#0f0";
+                                    tip.innerHTML = "保存成功";
+                                    setTimeout(function () {
+                                        tip.style.display = "none";
+                                    }, 1500);
+                                }
+                                else {
+                                    tip.style.color = "#f00";
+                                    tip.innerHTML = "保存失败，请重试";
+                                    setTimeout(function () {
+                                        tip.style.display = "none";
+                                    }, 1500);
+                                }
+                            }
+                        }
+                    }
+
+                    if (id) {
+
+                    }
+                    request.open("post", postUrl);
+                    var postStr = '';
+                    for (var i = 0; i < inputs.length; i++) {
+                        var item = inputs[i];
+                        var key = item.name;
+                        var val = item.value;
+                        if (i == inputs.length - 1) {
+                            postStr += (encodeURIComponent(key) + '=' + encodeURIComponent(val));
+                        }
+                        else {
+                            postStr += (encodeURIComponent(key) + '=' + encodeURIComponent(val) + '&');
+                        }
+                    }
+                    request.setRequestHeader("CONTENT-TYPE", "application/x-www-form-urlencoded");
+                    request.send(postStr);
+                }
+                return false;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="wrap">
+        <div class="head">
+            <div class="container">教材信息管理系统</div>
+        </div>
+        <div class="main edit">
+            <div class="container">
+                <div class="btnbox">
+                    <a href="index.html" class="btn">返回列表</a>
+                </div>
+                <form id="form">
+                    <table>
+                        <tr>
+                            <td>编号</td>
+                            <td>
+                                <input type="text" name="code" value="" placeholder="请输入编号" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>书名</td>
+                            <td>
+                                <input type="text" name="name" value="" placeholder="请输入书名" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>作者</td>
+                            <td>
+                                <input type="text" name="author" value="" placeholder="请输入作者" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>出版社</td>
+                            <td>
+                                <input type="text" name="press" value="" placeholder="请输入出版社" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>单价</td>
+                            <td>
+                                <input type="text" name="price" value="" placeholder="请输入单价，如：10.00" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>数量</td>
+                            <td>
+                                <input type="text" name="count" value="" placeholder="请输入数量，如：10" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>
+                                <a href="#" class="btn" id="submbit">保存</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>
+                                <div id="tip"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
